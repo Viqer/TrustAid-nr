@@ -182,7 +182,11 @@ TrustAid aims to combine the usability of traditional platforms with the transpa
 
 ## Installation
 
+- Note the above has been AI generated and is placeholder text.
+  
 ### 1. Clone the repository
 ```bash
+
+
 git clone https://github.com/your-username/trustaid.git
 cd trustaid
