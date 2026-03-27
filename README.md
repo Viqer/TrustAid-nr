@@ -188,5 +188,5 @@ TrustAid aims to combine the usability of traditional platforms with the transpa
 ```bash
 
 
-git clone https://github.com/your-username/trustaid.git
+git clone https://github.com/your-username/trustaidnr.git
 cd trustaid
