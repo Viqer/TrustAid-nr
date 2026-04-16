@@ -127,4 +127,24 @@ TrustAid uses a modular backend structure:
 - [ ] Blockchain logging service
 - [ ] Donor dashboard with transaction hashes
 - [ ] Admin verification panel
-- [ ] Performan
+- [ ] Performance benchmarks and load testing
+
+---
+
+## Status
+
+🚧 **Actively under development.**  
+Core architecture and landing page are established.
+Payment and blockchain modules are in progress.
+
+---
+
+## Installation
+
+```bash
+git clone https://github.com/Viqer/TrustAid-nr.git
+cd TrustAid-nr
+npm install
+```
+
+Environment variables required — see `.env.example` *(coming soon)*
