@@ -1,192 +1,130 @@
 # TrustAid
 
-**TrustAid** is a decentralized donation platform that connects NGOs and communities in need with donors through a transparent and secure web-based system. The platform uses blockchain technology to log donation transactions, allowing donors to verify contributions and improving trust in the donation process.
+**TrustAid** is a full-stack donation platform built for the Indian market,
+enabling donors to contribute to verified NGOs via **UPI and card payments**.
+Every donation is cryptographically logged on a blockchain ledger —
+creating a publicly verifiable, tamper-proof audit trail without requiring
+donors to hold or understand cryptocurrency.
+
+> Payments through UPI and cards. Trust through blockchain.
 
 ---
 
-## Overview
+## The Problem
 
-Traditional donation platforms often rely on centralized systems, where donors have limited visibility into how funds are used. TrustAid addresses this issue by combining a modern web application with blockchain-backed transaction logging.
+Donation platforms in India suffer from a trust deficit. Donors have no way
+to independently verify that their money reached the NGO, and no guarantee
+that reported donation figures haven't been altered. Existing blockchain
+donation platforms solve this with crypto — but crypto adoption in India
+remains extremely low, creating a barrier for everyday donors.
 
-The platform is designed from the **donor's perspective**, making it easy to:
-- explore verified causes
-- donate securely
-- track donation history
-- view blockchain transaction records
+## The Solution
+
+TrustAid separates the payment layer from the trust layer:
+
+- **Payment**: Donors use UPI or cards — familiar, instant, widely adopted
+- **Trust**: Every successful transaction is logged as an immutable record
+  on the blockchain, generating a transaction hash the donor can verify
+  independently at any time
+
+This means any Indian with a UPI ID can donate and receive cryptographic
+proof of their contribution — no wallet, no crypto, no friction.
 
 ---
 
 ## Key Features
 
-- NGO registration and verification
-- Campaign creation and management
-- Donor-focused campaign browsing
-- Secure donation workflow
-- Blockchain-based donation logging
-- Donation tracking dashboard
-- Admin verification and monitoring
+- NGO registration and admin verification
+- Campaign creation and browsing
+- Donations via UPI and card payment gateway
+- Automatic blockchain logging on donation confirmation
+- Transaction hash returned to donor as proof of payment
+- Donor dashboard with full donation history and blockchain references
+- Admin panel for NGO and campaign oversight
 
 ---
 
-## Problem Statement
+## Donation Flow
 
-Many donation systems lack transparency and accountability. Donors often cannot verify where their money goes, which reduces trust and participation. TrustAid solves this by recording donation activity on the blockchain and presenting it through a user-friendly interface.
-
----
-
-## Objectives
-
-- Build a platform that connects donors and NGOs
-- Improve transparency in donation systems
-- Record donations on blockchain for accountability
-- Provide a secure and simple donor experience
-- Reduce misuse of funds through verifiable records
-
----
-
-## SDG Alignment
-
-TrustAid primarily supports:
-
-- **SDG 16** – Peace, Justice and Strong Institutions
-- **SDG 1** – No Poverty
-- **SDG 10** – Reduced Inequalities
-- **SDG 17** – Partnerships for the Goals
+1. Donor selects a verified campaign
+2. Initiates payment via UPI or card
+3. On payment confirmation, backend stores the donation in MongoDB
+4. Blockchain service logs an immutable transaction record
+5. A transaction hash is generated and returned to the donor
+6. Donor can verify the transaction independently via the hash
 
 ---
 
 ## Tech Stack
 
 ### Frontend
-- HTML
-- CSS
-- JavaScript
-- React
+- React, JavaScript
 
 ### Backend
-- Node.js
-- Express.js
+- Node.js, Express.js
 
 ### Database
 - MongoDB
 
 ### Blockchain
-- Solidity
-- Hardhat
-- ethers.js
+- Ethereum (testnet) via **ethers.js**
+- Used exclusively as an immutable logging layer — not for payments
+
+### Payment
+- UPI and card payments via payment gateway integration *(in progress)*
 
 ---
 
-## Proposed Architecture
+## Architecture
 
-TrustAid follows a modular backend design with a microservices-inspired structure and event-driven donation processing.
+TrustAid uses a modular backend structure:
 
-### Backend Structure
-- `config/` – database and environment configuration
-- `controllers/` – request handling logic
-- `middleware/` – authentication, validation, error handling
+- `config/` – environment and DB configuration
+- `controllers/` – request handling per module
+- `middleware/` – auth, validation, error handling
 - `models/` – MongoDB schemas
-- `routes/` – API routes
-- `server/` – app and server entry point
+- `routes/` – REST API routes
+- `services/blockchain/` – handles transaction logging to chain
 
 ### Core Modules
-- Authentication Service
+
+- Auth Service
 - NGO Service
 - Campaign Service
 - Donation Service
-- Blockchain Service
+- Blockchain Logging Service
 - Admin Module
 
 ---
 
-## Donation Flow
+## Database Schema (Core)
 
-1. Donor browses and selects a campaign  
-2. Donation request is sent to backend  
-3. Donation is stored in MongoDB  
-4. Blockchain service logs the transaction  
-5. Transaction hash is generated  
-6. Donor can track the donation in the dashboard  
-
----
-
-## Database Schema
-
-### Users
-- `user_id`
-- `name`
-- `email`
-- `password_hash`
-- `role`
-- `created_at`
-
-### NGOs
-- `ngo_id`
-- `user_id`
-- `org_name`
-- `reg_number`
-- `verification_status`
-- `verified_at`
-
-### Campaigns
-- `campaign_id`
-- `ngo_id`
-- `title`
-- `description`
-- `category`
-- `goal_amount`
-- `raised_amount`
-- `deadline`
-- `status`
-- `created_at`
-
-### Donations
-- `donation_id`
-- `donor_id`
-- `campaign_id`
-- `amount`
-- `status`
-- `tx_hash`
-- `network`
-- `created_at`
+**Users** — user_id, name, email, password_hash, role, created_at  
+**NGOs** — ngo_id, user_id, org_name, reg_number, verification_status  
+**Campaigns** — campaign_id, ngo_id, title, goal_amount, raised_amount, deadline, status  
+**Donations** — donation_id, donor_id, campaign_id, amount, payment_method,
+                 payment_status, tx_hash, created_at
 
 ---
 
-## Similar Platforms
+## Comparable Platforms
 
-### India
-- Donatekart
-- GiveIndia
-- Milaap
-- Ketto
-
-### International
-- Giveth
-- The Giving Block
-- Binance Charity
-
-TrustAid aims to combine the usability of traditional platforms with the transparency of blockchain-based systems.
+| Platform     | Payments     | Blockchain | India-Focused |
+|-------------|-------------|------------|---------------|
+| GiveIndia   | UPI / Cards | ✗          | ✓             |
+| Milaap      | UPI / Cards | ✗          | ✓             |
+| Giveth      | Crypto only | ✓          | ✗             |
+| **TrustAid**| **UPI / Cards** | **✓**  | **✓**         |
 
 ---
 
-## Future Enhancements
+## Roadmap
 
-- Live donation analytics dashboard
-- Wallet integration
-- Smart contract automation
-- NGO performance insights
-- Notification and alert system
-- Multi-language support
-
----
-
-## Installation
-
-- Note the above has been AI generated and is placeholder text.
-  
-### 1. Clone the repository
-```bash
-
-
-git clone https://github.com/your-username/trustaidnr.git
-cd trustaid
+- [x] Landing page
+- [ ] Auth system (donor + NGO)
+- [ ] Campaign module
+- [ ] Payment gateway integration (UPI + cards)
+- [ ] Blockchain logging service
+- [ ] Donor dashboard with transaction hashes
+- [ ] Admin verification panel
+- [ ] Performan
