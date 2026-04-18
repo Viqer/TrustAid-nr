@@ -7,6 +7,35 @@ const Ngo = require('../models/Ngo');
 const User = require('../models/User');
 const { AppError } = require('../middleware/errorHandler');
 
+const POPULATE_USER_FIELDS = 'email firstName lastName';
+
+/**
+ * @param {object} userRef — populated user subdoc or plain object with firstName, lastName, email, _id
+ */
+const shapeUserIdForResponse = (userRef) => {
+  if (!userRef) return null;
+  const u = userRef.toObject ? userRef.toObject() : { ...userRef };
+  return {
+    _id: u._id,
+    name: `${u.firstName || ''} ${u.lastName || ''}`.trim(),
+    email: u.email,
+  };
+};
+
+const serializeNgoForResponse = (ngoDoc) => {
+  const plain = ngoDoc.toObject ? ngoDoc.toObject() : { ...ngoDoc };
+  if (plain.userId && typeof plain.userId === 'object' && plain.userId.email !== undefined) {
+    plain.userId = shapeUserIdForResponse(plain.userId);
+  }
+  return plain;
+};
+
+const fetchNgoSerialized = async (ngoId) => {
+  const doc = await Ngo.findById(ngoId).populate('userId', POPULATE_USER_FIELDS);
+  if (!doc) return null;
+  return serializeNgoForResponse(doc);
+};
+
 const applyAsNgo = async (req, res, next) => {
   try {
     const userId = req.user.id;
@@ -38,17 +67,18 @@ const applyAsNgo = async (req, res, next) => {
     });
 
     // Update user role
-    const user = await User.findByIdAndUpdate(userId, { role: 'NGO' }, { new: true });
+    await User.findByIdAndUpdate(userId, { role: 'NGO' }, { new: true });
 
     await ngo.save();
 
+    const serialized = await fetchNgoSerialized(ngo._id);
+    if (!serialized) {
+      throw new AppError('NGO not found after creation.', 500);
+    }
+
     res.status(201).json({
       success: true,
-      message: 'NGO application submitted successfully.',
-      data: {
-        ngo,
-        user: user.toJSON(),
-      },
+      ngo: serialized,
     });
   } catch (error) {
     next(error);
@@ -59,15 +89,14 @@ const getNgoProfile = async (req, res, next) => {
   try {
     const { ngoId } = req.params;
 
-    const ngo = await Ngo.findById(ngoId).populate('userId', 'email firstName lastName');
+    const ngo = await Ngo.findById(ngoId).populate('userId', POPULATE_USER_FIELDS);
     if (!ngo) {
       throw new AppError('NGO not found.', 404);
     }
 
     res.status(200).json({
       success: true,
-      message: 'NGO profile retrieved successfully.',
-      data: ngo,
+      ngo: serializeNgoForResponse(ngo),
     });
   } catch (error) {
     next(error);
@@ -108,10 +137,14 @@ const uploadDocumentMetadata = async (req, res, next) => {
 
     await ngo.save();
 
+    const serialized = await fetchNgoSerialized(ngo._id);
+    if (!serialized) {
+      throw new AppError('NGO not found.', 404);
+    }
+
     res.status(200).json({
       success: true,
-      message: 'Document metadata uploaded successfully.',
-      data: ngo,
+      ngo: serialized,
     });
   } catch (error) {
     next(error);
@@ -124,7 +157,7 @@ const verifyNgo = async (req, res, next) => {
     const { status, notes } = req.validatedData;
     const adminId = req.user.id;
 
-    const ngo = await Ngo.findByIdAndUpdate(
+    const updated = await Ngo.findByIdAndUpdate(
       ngoId,
       {
         verificationStatus: status,
@@ -135,14 +168,18 @@ const verifyNgo = async (req, res, next) => {
       { new: true }
     );
 
-    if (!ngo) {
+    if (!updated) {
+      throw new AppError('NGO not found.', 404);
+    }
+
+    const serialized = await fetchNgoSerialized(updated._id);
+    if (!serialized) {
       throw new AppError('NGO not found.', 404);
     }
 
     res.status(200).json({
       success: true,
-      message: `NGO ${status.toLowerCase()} successfully.`,
-      data: ngo,
+      ngo: serialized,
     });
   } catch (error) {
     next(error);
@@ -158,24 +195,24 @@ const listNgos = async (req, res, next) => {
       query.verificationStatus = status;
     }
 
+    const pageNum = Number(page) || 1;
+    const limitNum = Number(limit) || 10;
+
     const ngos = await Ngo.find(query)
-      .populate('userId', 'email firstName lastName')
-      .limit(limit * 1)
-      .skip((page - 1) * limit)
+      .populate('userId', POPULATE_USER_FIELDS)
+      .limit(limitNum)
+      .skip((pageNum - 1) * limitNum)
       .sort({ createdAt: -1 });
 
     const count = await Ngo.countDocuments(query);
 
     res.status(200).json({
       success: true,
-      message: 'NGOs retrieved successfully.',
-      data: {
-        ngos,
-        pagination: {
-          currentPage: page,
-          totalPages: Math.ceil(count / limit),
-          total: count,
-        },
+      ngos: ngos.map((doc) => serializeNgoForResponse(doc)),
+      pagination: {
+        currentPage: pageNum,
+        totalPages: Math.ceil(count / limitNum) || 0,
+        total: count,
       },
     });
   } catch (error) {
