@@ -8,7 +8,7 @@ const Joi = require('joi');
 
 const authController = require('../controllers/authController');
 const validate = require('../middleware/validate');
-const { authLimiter } = require('../middleware/rateLimit');
+const { loginLimiter, registerLimiter } = require('../middleware/rateLimit');
 const asyncHandler = require('../middleware/asyncHandler');
 
 // Validation schemas
@@ -32,14 +32,14 @@ const refreshTokenSchema = Joi.object({
 // Routes
 router.post(
   '/register',
-  authLimiter,
+  registerLimiter,
   validate(registerSchema),
   asyncHandler(authController.register)
 );
 
 router.post(
   '/login',
-  authLimiter,
+  loginLimiter,
   validate(loginSchema),
   asyncHandler(authController.login)
 );

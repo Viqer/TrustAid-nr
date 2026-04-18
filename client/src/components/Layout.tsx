@@ -15,6 +15,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   ];
 
   if (user) {
+    navLinks.push({ label: 'Profile', href: '/profile' });
     if (user.role === 'DONOR') navLinks.push({ label: 'My Donations', href: '/donor-dashboard' });
     if (user.role === 'NGO') navLinks.push({ label: 'NGO Dashboard', href: '/ngo-dashboard' });
     if (user.role === 'ADMIN') navLinks.push({ label: 'Admin Panel', href: '/admin' });

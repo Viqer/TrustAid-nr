@@ -11,6 +11,7 @@ import RegisterPage from './pages/RegisterPage';
 import DonorDashboard from './pages/DonorDashboard';
 import NgoDashboard from './pages/NgoDashboard';
 import AdminPanel from './pages/AdminPanel';
+import ProfilePage from './pages/ProfilePage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -29,6 +30,7 @@ function App() {
           <Route path="/" component={LandingPage} />
           <Route path="/login" component={LoginPage} />
           <Route path="/register" component={RegisterPage} />
+          <Route path="/profile" component={ProfilePage} />
           <Route path="/campaign/:id" component={CampaignDetailPage} />
           <Route path="/donor-dashboard" component={DonorDashboard} />
           <Route path="/ngo-dashboard" component={NgoDashboard} />

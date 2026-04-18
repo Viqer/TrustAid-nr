@@ -2,6 +2,22 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchApi } from '@/lib/api';
 import type { Campaign } from '@/types';
 
+function normalizeCampaign(raw: Record<string, unknown>): Campaign {
+  const rawNgoId = raw.ngoId;
+  let ngo: { _id: string; name: string } | undefined;
+  let ngoIdStr: string | undefined;
+
+  if (rawNgoId && typeof rawNgoId === 'object') {
+    const o = rawNgoId as { _id: string; organizationName?: string };
+    ngo = { _id: o._id, name: o.organizationName ?? 'NGO' };
+    ngoIdStr = o._id;
+  } else if (typeof rawNgoId === 'string') {
+    ngoIdStr = rawNgoId;
+  }
+
+  return { ...(raw as object), ngo, ngoId: ngoIdStr } as Campaign;
+}
+
 export function useCampaigns(params?: { search?: string, category?: string }) {
   return useQuery({
     queryKey: ['campaigns', params],
@@ -10,8 +26,10 @@ export function useCampaigns(params?: { search?: string, category?: string }) {
       if (params?.search) searchParams.append('search', params.search);
       if (params?.category) searchParams.append('category', params.category.toUpperCase());
       const queryStr = searchParams.toString();
-      const result = await fetchApi<{ campaigns: Campaign[], pagination: any }>(`/campaigns${queryStr ? `?${queryStr}` : ''}`);
-      return result.campaigns;
+      const result = await fetchApi<{ campaigns: Record<string, unknown>[]; pagination: unknown }>(
+        `/campaigns${queryStr ? `?${queryStr}` : ''}`
+      );
+      return (result.campaigns ?? []).map((c) => normalizeCampaign(c));
     },
   });
 }
@@ -19,7 +37,10 @@ export function useCampaigns(params?: { search?: string, category?: string }) {
 export function useCampaign(id: string) {
   return useQuery({
     queryKey: ['campaigns', id],
-    queryFn: () => fetchApi<Campaign>(`/campaigns/${id}`),
+    queryFn: async () => {
+      const raw = await fetchApi<Record<string, unknown>>(`/campaigns/${id}`);
+      return normalizeCampaign(raw);
+    },
     enabled: !!id,
   });
 }

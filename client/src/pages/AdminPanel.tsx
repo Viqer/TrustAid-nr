@@ -13,8 +13,8 @@ export default function AdminPanel() {
   if (!user) return <Redirect to="/login" />;
   if (user.role !== 'ADMIN') return <div className="p-20 text-center font-bold">Access Denied. Admin Area.</div>;
 
-  const pendingNgos = ngos?.filter(n => n.status === 'pending') || [];
-  const reviewedNgos = ngos?.filter(n => n.status !== 'pending') || [];
+  const pendingNgos = ngos?.filter((n) => n.verificationStatus === 'PENDING') || [];
+  const reviewedNgos = ngos?.filter((n) => n.verificationStatus !== 'PENDING') || [];
 
   const handleAction = async (id: string, status: 'verified' | 'rejected') => {
     try {
@@ -53,13 +53,19 @@ export default function AdminPanel() {
           {pendingNgos.map(ngo => (
             <Card key={ngo._id} className="p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
               <div className="space-y-1 flex-1">
-                <h3 className="text-2xl font-bold">{ngo.name}</h3>
+                <h3 className="text-2xl font-bold">{ngo.organizationName}</h3>
                 <p className="text-sm text-muted-foreground">Reg No: {ngo.registrationNumber}</p>
                 <div className="grid grid-cols-2 gap-4 mt-4 text-sm bg-muted/30 p-4 rounded-xl">
-                  <div><span className="font-semibold text-foreground">Email:</span> {ngo.contactEmail}</div>
+                  <div><span className="font-semibold text-foreground">Email:</span>{' '}
+                    {typeof ngo.userId === 'object' && ngo.userId && 'email' in ngo.userId
+                      ? (ngo.userId as { email?: string }).email ?? '—'
+                      : '—'}
+                  </div>
                   <div><span className="font-semibold text-foreground">Website:</span> {ngo.website || 'N/A'}</div>
-                  <div><span className="font-semibold text-foreground">Country:</span> {ngo.country}</div>
-                  <div><span className="font-semibold text-foreground">Address:</span> {ngo.address}</div>
+                  <div><span className="font-semibold text-foreground">Country:</span> {ngo.address?.country ?? '—'}</div>
+                  <div><span className="font-semibold text-foreground">Address:</span>{' '}
+                    {[ngo.address?.street, ngo.address?.city].filter(Boolean).join(', ') || '—'}
+                  </div>
                 </div>
                 <p className="text-sm mt-4 italic text-muted-foreground">"{ngo.description}"</p>
               </div>
@@ -89,9 +95,9 @@ export default function AdminPanel() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {reviewedNgos.map(ngo => (
           <Card key={ngo._id} className="p-5 flex justify-between items-center bg-muted/20 border-dashed">
-            <span className="font-semibold truncate mr-4">{ngo.name}</span>
-            <Badge variant={ngo.status === 'verified' ? 'success' : 'destructive'}>
-              {ngo.status}
+            <span className="font-semibold truncate mr-4">{ngo.organizationName}</span>
+            <Badge variant={ngo.verificationStatus === 'VERIFIED' ? 'success' : 'destructive'}>
+              {ngo.verificationStatus}
             </Badge>
           </Card>
         ))}

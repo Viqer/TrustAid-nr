@@ -179,9 +179,9 @@ export default function CampaignDetailPage() {
              </div>
           )}
           <div>
-            <label className="block text-sm font-semibold mb-2">Donation Amount (USD)</label>
+            <label className="block text-sm font-semibold mb-2">Donation Amount (INR)</label>
             <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground font-bold">$</span>
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground font-bold">₹</span>
               <Input 
                 type="number" 
                 min="1" 
@@ -204,7 +204,7 @@ export default function CampaignDetailPage() {
                 onClick={() => setAmount(val.toString())}
                 className={amount === val.toString() ? 'border-primary text-primary bg-primary/5' : ''}
               >
-                ${val}
+                ₹{val}
               </Button>
             ))}
           </div>

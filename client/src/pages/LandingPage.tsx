@@ -38,7 +38,7 @@ export default function LandingPage() {
                 Explore Campaigns
               </Button>
               <Link href="/register">
-                <Button variant="outline" size="lg">Join as NGO</Button>
+                <Button variant="outline" size="lg">Create account</Button>
               </Link>
             </div>
           </motion.div>

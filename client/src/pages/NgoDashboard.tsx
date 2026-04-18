@@ -2,26 +2,41 @@ import { useState } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { useNgos, useApplyNgo } from '@/hooks/use-ngos';
 import { useCampaigns, useCreateCampaign, useCloseCampaign } from '@/hooks/use-campaigns';
+import { getNgoUserId } from '@/lib/ngo-utils';
 import { Card, Button, Input, Textarea, Badge, Dialog } from '@/components/ui';
 import { Redirect } from 'wouter';
 import { formatCurrency } from '@/lib/utils';
 import { PlusCircle, Building2, Ban, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import type { NgoApplyForm } from '@/types';
+
+const emptyApplyForm = (): NgoApplyForm => ({
+  name: '',
+  description: '',
+  registrationNumber: '',
+  website: '',
+  phone: '',
+  country: '',
+  address: '',
+});
 
 export default function NgoDashboard() {
   const { user } = useAuth();
   
   // Find current NGO associated with user
   const { data: ngos, isLoading: ngosLoading } = useNgos();
-  const myNgo = ngos?.find(n => typeof n.user === 'object' ? (n.user as any)._id === user?.id : n.user === user?.id);
+  const myNgo = ngos?.find((n) => getNgoUserId(n) === user?.id);
   
   const { data: campaigns, isLoading: campaignsLoading } = useCampaigns();
-  const myCampaigns = campaigns?.filter(c => typeof c.ngo === 'object' ? c.ngo._id === myNgo?._id : c.ngo === myNgo?._id) || [];
+  const myCampaigns =
+    campaigns?.filter(
+      (c) => c.ngo?._id === myNgo?._id || c.ngoId === myNgo?._id
+    ) || [];
 
   const [applyOpen, setApplyOpen] = useState(false);
   const applyMutation = useApplyNgo();
-  const [applyForm, setApplyForm] = useState({ name: '', description: '', registrationNumber: '', website: '', contactEmail: '', country: '', address: '' });
+  const [applyForm, setApplyForm] = useState<NgoApplyForm>(emptyApplyForm());
 
   const [campaignOpen, setCampaignOpen] = useState(false);
   const createCampaign = useCreateCampaign();
@@ -36,9 +51,10 @@ export default function NgoDashboard() {
   const handleApply = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await applyMutation.mutateAsync({ ...applyForm, categories: ['general'] });
+      await applyMutation.mutateAsync(applyForm);
       toast.success("Application submitted! Please wait for Admin verification.");
       setApplyOpen(false);
+      setApplyForm(emptyApplyForm());
     } catch (err: any) {
       toast.error(err.message || "Failed to apply");
     }
@@ -72,13 +88,11 @@ export default function NgoDashboard() {
             <Input placeholder="Organization Name" value={applyForm.name} onChange={e => setApplyForm({...applyForm, name: e.target.value})} required />
             <Input placeholder="Registration Number" value={applyForm.registrationNumber} onChange={e => setApplyForm({...applyForm, registrationNumber: e.target.value})} required />
             <Textarea placeholder="Organization Description" value={applyForm.description} onChange={e => setApplyForm({...applyForm, description: e.target.value})} required />
-            <div className="grid grid-cols-2 gap-4">
-              <Input type="email" placeholder="Contact Email" value={applyForm.contactEmail} onChange={e => setApplyForm({...applyForm, contactEmail: e.target.value})} required />
-              <Input placeholder="Website URL" value={applyForm.website} onChange={e => setApplyForm({...applyForm, website: e.target.value})} />
-            </div>
+            <Input type="tel" placeholder="Phone (organization contact)" value={applyForm.phone} onChange={e => setApplyForm({...applyForm, phone: e.target.value})} required />
+            <Input placeholder="Website URL (optional)" value={applyForm.website} onChange={e => setApplyForm({...applyForm, website: e.target.value})} />
             <div className="grid grid-cols-2 gap-4">
               <Input placeholder="Country" value={applyForm.country} onChange={e => setApplyForm({...applyForm, country: e.target.value})} required />
-              <Input placeholder="Address" value={applyForm.address} onChange={e => setApplyForm({...applyForm, address: e.target.value})} required />
+              <Input placeholder="Street address" value={applyForm.address} onChange={e => setApplyForm({...applyForm, address: e.target.value})} required />
             </div>
             <Button type="submit" className="w-full" isLoading={applyMutation.isPending}>Submit Application</Button>
           </form>
@@ -92,22 +106,22 @@ export default function NgoDashboard() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6">
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <h1 className="text-4xl font-bold font-display">{myNgo.name}</h1>
-            {myNgo.status === 'verified' && <CheckCircle2 className="w-6 h-6 text-green-500" />}
+            <h1 className="text-4xl font-bold font-display">{myNgo.organizationName}</h1>
+            {myNgo.verificationStatus === 'VERIFIED' && <CheckCircle2 className="w-6 h-6 text-green-500" />}
           </div>
-          <Badge variant={myNgo.status === 'verified' ? 'success' : myNgo.status === 'pending' ? 'warning' : 'destructive'} className="text-sm">
-            Status: {myNgo.status.toUpperCase()}
+          <Badge variant={myNgo.verificationStatus === 'VERIFIED' ? 'success' : myNgo.verificationStatus === 'PENDING' ? 'warning' : 'destructive'} className="text-sm">
+            Status: {myNgo.verificationStatus}
           </Badge>
         </div>
         
-        {myNgo.status === 'verified' && (
+        {myNgo.verificationStatus === 'VERIFIED' && (
           <Button size="lg" onClick={() => setCampaignOpen(true)}>
             <PlusCircle className="w-5 h-5 mr-2" /> New Campaign
           </Button>
         )}
       </div>
 
-      {myNgo.status === 'pending' && (
+      {myNgo.verificationStatus === 'PENDING' && (
         <Card className="p-8 border-yellow-200 bg-yellow-50/50 mb-8 flex items-center gap-4">
           <div className="p-3 bg-yellow-100 rounded-full text-yellow-700">
              <CheckCircle2 className="w-8 h-8" />
@@ -119,7 +133,7 @@ export default function NgoDashboard() {
         </Card>
       )}
 
-      {myNgo.status === 'rejected' && (
+      {myNgo.verificationStatus === 'REJECTED' && (
         <Card className="p-8 border-red-200 bg-red-50/50 mb-8 flex items-center gap-4">
           <div className="p-3 bg-red-100 rounded-full text-red-700">
              <Ban className="w-8 h-8" />

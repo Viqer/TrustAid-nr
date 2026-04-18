@@ -6,7 +6,7 @@ import { fetchApi } from '@/lib/api';
 import { toast } from 'sonner';
 
 export default function RegisterPage() {
-  const [formData, setFormData] = useState({ name: '', email: '', password: '', role: 'DONOR' });
+  const [formData, setFormData] = useState({ name: '', email: '', password: '' });
   const [isLoading, setIsLoading] = useState(false);
   
   const { setToken } = useAuth();
@@ -16,17 +16,24 @@ export default function RegisterPage() {
     e.preventDefault();
     setIsLoading(true);
     try {
+      const trimmed = formData.name.trim();
+      const parts = trimmed.split(/\s+/).filter(Boolean);
+      const firstName = parts[0] || 'Donor';
+      const lastName = parts.length > 1 ? parts.slice(1).join(' ') : firstName;
+
       const res: any = await fetchApi('/auth/register', {
         method: 'POST',
-        data: formData
+        data: {
+          email: formData.email,
+          password: formData.password,
+          firstName,
+          lastName,
+          role: 'DONOR',
+        },
       });
       setToken(res.token);
       toast.success("Account created successfully!");
-      if (formData.role === 'NGO') {
-        setLocation('/ngo-dashboard');
-      } else {
-        setLocation('/');
-      }
+      setLocation('/');
     } catch (err: any) {
       toast.error(err.message || "Failed to register");
     } finally {
@@ -44,25 +51,8 @@ export default function RegisterPage() {
 
         <Card className="p-8 shadow-xl shadow-black/5">
           <form onSubmit={handleRegister} className="space-y-5">
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <Button 
-                type="button" 
-                variant={formData.role === 'DONOR' ? 'default' : 'outline'} 
-                onClick={() => setFormData({...formData, role: 'DONOR'})}
-              >
-                Donor
-              </Button>
-              <Button 
-                type="button" 
-                variant={formData.role === 'NGO' ? 'default' : 'outline'} 
-                onClick={() => setFormData({...formData, role: 'NGO'})}
-              >
-                NGO
-              </Button>
-            </div>
-
             <div>
-              <label className="block text-sm font-semibold mb-2">Full Name / Organization Name</label>
+              <label className="block text-sm font-semibold mb-2">Full name</label>
               <Input 
                 value={formData.name} 
                 onChange={e => setFormData({...formData, name: e.target.value})} 

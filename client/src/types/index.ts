@@ -7,30 +7,59 @@ export interface User {
   role: Role;
 }
 
+export type NgoVerificationStatus = 'PENDING' | 'VERIFIED' | 'REJECTED';
+
 export interface NGO {
   _id: string;
-  user: string;
-  name: string;
+  userId: string | { _id: string; email?: string; firstName?: string; lastName?: string };
+  organizationName: string;
   description: string;
   registrationNumber: string;
-  website: string;
-  contactEmail: string;
-  status: 'pending' | 'verified' | 'rejected';
-  categories: string[];
+  website?: string | null;
+  phone?: string;
+  address?: {
+    street?: string;
+    city?: string;
+    state?: string;
+    zipCode?: string;
+    country?: string;
+  };
+  verificationStatus: NgoVerificationStatus;
+}
+
+/** Form fields used by apply dialogs before mapping to the API body. */
+export interface NgoApplyForm {
+  name: string;
+  registrationNumber: string;
+  description: string;
+  website?: string;
+  phone: string;
   country: string;
   address: string;
 }
 
 export interface Campaign {
   _id: string;
-  ngo: Pick<NGO, '_id' | 'name'>;
+  /** Normalized from populated `ngoId` for display (see `use-campaigns`). */
+  ngo?: { _id: string; name: string };
+  ngoId?: string;
   title: string;
   description: string;
   goalAmount: number;
   raisedAmount: number;
   totalDonors: number;
   category: string;
-  status: 'active' | 'closed' | 'completed';
+  /** API uses uppercase enums; some UI still checks lowercase. */
+  status:
+    | 'active'
+    | 'closed'
+    | 'completed'
+    | 'DRAFT'
+    | 'ACTIVE'
+    | 'PAUSED'
+    | 'COMPLETED'
+    | 'FAILED'
+    | 'CLOSED';
   startDate: string;
   endDate: string;
   beneficiaries: string;
