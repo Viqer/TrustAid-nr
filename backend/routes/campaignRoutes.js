@@ -19,8 +19,10 @@ const createCampaignSchema = Joi.object({
   longDescription: Joi.string().trim().optional(),
   goalAmount: Joi.number().min(1).required(),
   currency: Joi.string().valid('USD', 'EUR', 'GBP', 'INR').optional(),
-  category: Joi.string().valid('HEALTH', 'EDUCATION', 'DISASTER_RELIEF', 'ENVIRONMENT', 'POVERTY', 'OTHER').required(),
-  deadline: Joi.date().iso().required(),
+  category: Joi.string().trim().lowercase().valid('health', 'education', 'disaster-relief', 'environment', 'poverty', 'human-rights', 'arts', 'animal-welfare', 'other').required(),
+  startDate: Joi.date().iso().required(),
+  endDate: Joi.date().iso().required(),
+  beneficiaries: Joi.string().trim().required(),
   image: Joi.string().uri().optional(),
   tags: Joi.array().items(Joi.string()).optional(),
 });

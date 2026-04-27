@@ -22,6 +22,7 @@ if (initialToken) {
       email: decoded.email,
       role: decoded.role,
       name: decoded.name,
+      localWalletId: decoded.localWalletId || null,
     };
   } catch (e) {
     localStorage.removeItem('trustaid_token');
@@ -41,6 +42,7 @@ export const useAuth = create<AuthState>((set) => ({
         email: decoded.email,
         role: decoded.role,
         name: decoded.name,
+        localWalletId: decoded.localWalletId || null,
       }
     });
   },

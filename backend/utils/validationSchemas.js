@@ -75,9 +75,13 @@ const schemas = {
       goalAmount: Joi.number().min(1).required(),
       currency: Joi.string().valid('USD', 'EUR', 'GBP', 'INR').optional(),
       category: Joi.string()
-        .valid('HEALTH', 'EDUCATION', 'DISASTER_RELIEF', 'ENVIRONMENT', 'POVERTY', 'OTHER')
+        .trim()
+        .lowercase()
+        .valid('health', 'education', 'disaster-relief', 'environment', 'poverty', 'human-rights', 'arts', 'animal-welfare', 'other')
         .required(),
-      deadline: Joi.date().iso().required(),
+      startDate: Joi.date().iso().required(),
+      endDate: Joi.date().iso().required(),
+      beneficiaries: Joi.string().trim().required(),
       image: Joi.string().uri().optional().allow(null),
       tags: Joi.array().items(Joi.string()).optional(),
     }),

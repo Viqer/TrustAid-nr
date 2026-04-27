@@ -255,7 +255,7 @@ export default function CampaignDetailPage() {
               isLoading={dummyDonate.isPending}
               disabled={!user || user.role !== 'DONOR' || dummyDonate.isPending}
             >
-              {dummyDonate.isPending ? 'Processing on blockchain...' : 'Donate (Test)'}
+              {dummyDonate.isPending ? 'Processing on blockchain...' : 'Donate'}
             </Button>
           </form>
         )}

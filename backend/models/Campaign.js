@@ -53,9 +53,17 @@ const campaignSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
+    endDate: {
+      type: Date,
+      default: null,
+    },
     deadline: {
       type: Date,
       required: true,
+    },
+    beneficiaries: {
+      type: String,
+      default: null,
     },
     image: {
       type: String,

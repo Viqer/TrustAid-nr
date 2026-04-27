@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import { Link } from 'wouter';
+import { useQuery } from '@tanstack/react-query';
 import { useCampaigns } from '@/hooks/use-campaigns';
 import { Button, Card, Badge, Progress, Input } from '@/components/ui';
 import { motion } from 'framer-motion';
 import { formatCurrency } from '@/lib/utils';
-import { Search, MapPin, Users, Loader2 } from 'lucide-react';
+import { Search, MapPin, Users, Loader2, ReceiptText, ArrowRight, Copy } from 'lucide-react';
+import { fetchApi } from '@/lib/api';
+import type { LedgerDonation } from '@/types';
 
 const CATEGORIES = ["All", "education", "health", "environment", "disaster-relief", "poverty", "human-rights", "arts", "animal-welfare", "other"];
 
@@ -18,6 +21,13 @@ export default function LandingPage() {
   });
 
   const activeCampaigns = campaigns?.filter(c => c.status === 'ACTIVE') || [];
+
+  const { data: ledgerData } = useQuery<{ entries: LedgerDonation[]; totalCount: number }>({
+    queryKey: ['ledger-donations', 'landing'],
+    queryFn: () => fetchApi<{ entries: LedgerDonation[]; totalCount: number }>('/donations/ledger?limit=8'),
+  });
+
+  const recentLedgerEntries = ledgerData?.entries ?? [];
 
   return (
     <div className="w-full">
@@ -37,11 +47,64 @@ export default function LandingPage() {
               <Button size="lg" onClick={() => document.getElementById('campaigns')?.scrollIntoView({ behavior: 'smooth' })}>
                 Explore Campaigns
               </Button>
+              <Link href="/ledger">
+                <Button variant="outline" size="lg">
+                  <ReceiptText className="w-5 h-5 mr-2" />
+                  View Ledger
+                </Button>
+              </Link>
               <Link href="/register">
                 <Button variant="outline" size="lg">Create account</Button>
               </Link>
             </div>
           </motion.div>
+        </div>
+      </section>
+
+      {/* Ledger Preview */}
+      <section className="py-4 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-end justify-between gap-4 mb-6">
+          <div>
+            <h2 className="text-3xl font-bold mb-2">Latest On-Chain Activity</h2>
+            <p className="text-muted-foreground">A live preview of the most recent ledger donations.</p>
+          </div>
+          <Link href="/ledger" className="hidden sm:inline-flex">
+            <Button variant="ghost" className="text-primary hover:text-primary">
+              Open full ledger <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {recentLedgerEntries.length === 0 ? (
+            <Card className="col-span-full p-8 text-center text-muted-foreground bg-muted/20 border-dashed">
+              <ReceiptText className="w-10 h-10 mx-auto mb-3 text-primary/40" />
+              <p>No on-chain donations yet. Check back shortly.</p>
+            </Card>
+          ) : (
+            recentLedgerEntries.map((entry) => (
+              <Card key={entry.donationId} className="p-5 flex flex-col gap-3 hover:shadow-lg transition-shadow">
+                <div className="flex items-center justify-between gap-3">
+                  <Badge variant="success">On-chain</Badge>
+                  <span className="text-xs text-muted-foreground">
+                    {new Date(entry.timestamp).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                  </span>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-foreground">{formatCurrency(entry.amount)}</p>
+                  <p className="text-sm text-muted-foreground mt-1">{entry.ngoName}</p>
+                </div>
+                <div className="rounded-xl bg-muted/50 border border-border px-3 py-2 text-xs font-mono text-muted-foreground flex items-center justify-between gap-2">
+                  <span>{entry.txHash.slice(0, 10)}...{entry.txHash.slice(-6)}</span>
+                  <Copy className="w-3.5 h-3.5" />
+                </div>
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span>{entry.donorAddress ? `${entry.donorAddress.slice(0, 8)}...${entry.donorAddress.slice(-6)}` : 'Anonymous'}</span>
+                  <Link href="/ledger" className="text-primary font-semibold hover:underline">View</Link>
+                </div>
+              </Card>
+            ))
+          )}
         </div>
       </section>
 
