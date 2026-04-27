@@ -10,7 +10,7 @@ const { AppError } = require('../middleware/errorHandler');
 
 const generateToken = (user) => {
   return jwt.sign(
-    { id: user._id, email: user.email, role: user.role },
+    { id: user._id, email: user.email, role: user.role, localWalletId: user.localWalletId || null },
     config.jwtSecret,
     { expiresIn: config.jwtExpiry }
   );

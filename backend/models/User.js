@@ -1,5 +1,8 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
+
+const createLocalWalletId = () => `lw_${crypto.randomBytes(12).toString('hex')}`;
 
 const userSchema = new mongoose.Schema(
   {
@@ -50,6 +53,12 @@ const userSchema = new mongoose.Schema(
       trim: true,
       lowercase: true,
       match: [/^0x[a-f0-9]{40}$/, 'Please provide a valid wallet address'],
+    },
+    localWalletId: {
+      type: String,
+      default: createLocalWalletId,
+      unique: true,
+      trim: true,
     },
     lastLogin: {
       type: Date,

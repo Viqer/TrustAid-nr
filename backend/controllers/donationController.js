@@ -7,8 +7,21 @@ const Donation = require('../models/Donation');
 const Campaign = require('../models/Campaign');
 const User = require('../models/User');
 const Ngo = require('../models/Ngo');
-const blockchainService = require('../blockchainService');
+const blockchainService = require('../blockchain/blockchainService');
 const { AppError } = require('../middleware/errorHandler');
+
+const crypto = require('crypto');
+
+const createLocalWalletId = () => `lw_${crypto.randomBytes(12).toString('hex')}`;
+
+const ensureLocalWalletId = async (entity) => {
+  if (!entity.localWalletId) {
+    entity.localWalletId = createLocalWalletId();
+    await entity.save();
+  }
+
+  return entity.localWalletId;
+};
 
 const createDonation = async (req, res, next) => {
   try {
@@ -208,18 +221,34 @@ const getCampaignDonations = async (req, res, next) => {
 
 const getLedgerDonations = async (req, res, next) => {
   try {
-    const donations = await Donation.find({
+    const rawLimit = parseInt(req.query.limit, 10);
+    const rawPage = parseInt(req.query.page, 10);
+    const limit = Number.isFinite(rawLimit) && rawLimit > 0 ? Math.min(rawLimit, 10) : null;
+    const page = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1;
+
+    const query = {
       status: 'CONFIRMED',
       blockchainTxHash: { $ne: null },
-    })
-      .populate('donorId', 'walletAddress')
+    };
+
+    const ledgerQuery = Donation.find(query)
+      .populate('donorId', 'walletAddress localWalletId')
       .populate('ngoId', 'organizationName')
       .sort({ createdAt: -1 });
+
+    if (limit) {
+      ledgerQuery.limit(limit).skip((page - 1) * limit);
+    }
+
+    const [donations, totalCount] = await Promise.all([
+      ledgerQuery,
+      Donation.countDocuments(query),
+    ]);
 
     const ledgerEntries = donations.map((donation) => ({
       donationId: donation._id,
       txHash: donation.blockchainTxHash,
-      donorAddress: donation.donorId?.walletAddress || null,
+      donorAddress: donation.donorId?.localWalletId || donation.donorId?.walletAddress || null,
       ngoName: donation.ngoId?.organizationName || 'Unknown NGO',
       amount: donation.amount,
       currency: donation.currency || 'INR',
@@ -231,7 +260,7 @@ const getLedgerDonations = async (req, res, next) => {
       message: 'Ledger donations retrieved successfully.',
       data: {
         entries: ledgerEntries,
-        totalCount: ledgerEntries.length,
+        totalCount,
       },
     });
   } catch (error) {
@@ -263,17 +292,12 @@ const dummyDonate = async (req, res, next) => {
       throw new AppError('NGO not found.', 404);
     }
 
-    if (!donor.walletAddress) {
-      throw new AppError('Donor wallet address is missing. Please update your profile.', 400);
-    }
-
-    if (!ngo.walletAddress) {
-      throw new AppError('NGO wallet address is missing. Donation cannot be processed.', 400);
-    }
+    const donorWalletId = await ensureLocalWalletId(donor);
+    const ngoWalletId = await ensureLocalWalletId(ngo);
 
     const { txHash } = await blockchainService.logDonation({
-      donorWalletAddress: donor.walletAddress,
-      ngoWalletAddress: ngo.walletAddress,
+      donorWalletId,
+      ngoWalletId,
       amount,
       donorId,
       campaignId,

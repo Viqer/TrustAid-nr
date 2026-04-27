@@ -5,6 +5,7 @@ export interface User {
   email: string;
   name?: string;
   role: Role;
+  localWalletId?: string | null;
 }
 
 export type NgoVerificationStatus = 'PENDING' | 'VERIFIED' | 'REJECTED';

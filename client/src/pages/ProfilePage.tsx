@@ -66,6 +66,15 @@ export default function ProfilePage() {
             {user.role.toLowerCase()}
           </Badge>
         </div>
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Local wallet ID</p>
+          <p className="text-sm font-mono break-all text-foreground">
+            {user.localWalletId || 'Generating...'}
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            This is your internal payment wallet reference used by TrustAid.
+          </p>
+        </div>
       </Card>
 
       {user.role === 'DONOR' && (
@@ -76,6 +85,9 @@ export default function ProfilePage() {
               <h2 className="text-xl font-bold mb-1">Organizations</h2>
               <p className="text-sm text-muted-foreground">
                 New accounts are created as donors. To list campaigns as an organization, apply for NGO verification.
+              </p>
+              <p className="text-sm text-muted-foreground mt-2">
+                Donations use your local wallet ID automatically. You do not need to add a public wallet address.
               </p>
             </div>
           </div>
