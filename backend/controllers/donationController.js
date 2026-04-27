@@ -7,6 +7,7 @@ const Donation = require('../models/Donation');
 const Campaign = require('../models/Campaign');
 const User = require('../models/User');
 const Ngo = require('../models/Ngo');
+const blockchainService = require('../blockchainService');
 const { AppError } = require('../middleware/errorHandler');
 
 const createDonation = async (req, res, next) => {
@@ -205,10 +206,127 @@ const getCampaignDonations = async (req, res, next) => {
   }
 };
 
+const getLedgerDonations = async (req, res, next) => {
+  try {
+    const donations = await Donation.find({
+      status: 'CONFIRMED',
+      blockchainTxHash: { $ne: null },
+    })
+      .populate('donorId', 'walletAddress')
+      .populate('ngoId', 'organizationName')
+      .sort({ createdAt: -1 });
+
+    const ledgerEntries = donations.map((donation) => ({
+      donationId: donation._id,
+      txHash: donation.blockchainTxHash,
+      donorAddress: donation.donorId?.walletAddress || null,
+      ngoName: donation.ngoId?.organizationName || 'Unknown NGO',
+      amount: donation.amount,
+      currency: donation.currency || 'INR',
+      timestamp: donation.createdAt,
+    }));
+
+    res.status(200).json({
+      success: true,
+      message: 'Ledger donations retrieved successfully.',
+      data: {
+        entries: ledgerEntries,
+        totalCount: ledgerEntries.length,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const dummyDonate = async (req, res, next) => {
+  try {
+    const donorId = req.user.id;
+    const { amount, campaignId } = req.validatedData;
+
+    const campaign = await Campaign.findById(campaignId);
+    if (!campaign) {
+      throw new AppError('Campaign not found.', 404);
+    }
+
+    if (!campaign.isActive || campaign.status !== 'ACTIVE') {
+      throw new AppError('Campaign is not active.', 400);
+    }
+
+    const donor = await User.findById(donorId);
+    if (!donor) {
+      throw new AppError('Donor not found.', 404);
+    }
+
+    const ngo = await Ngo.findById(campaign.ngoId);
+    if (!ngo) {
+      throw new AppError('NGO not found.', 404);
+    }
+
+    if (!donor.walletAddress) {
+      throw new AppError('Donor wallet address is missing. Please update your profile.', 400);
+    }
+
+    if (!ngo.walletAddress) {
+      throw new AppError('NGO wallet address is missing. Donation cannot be processed.', 400);
+    }
+
+    const { txHash } = await blockchainService.logDonation({
+      donorWalletAddress: donor.walletAddress,
+      ngoWalletAddress: ngo.walletAddress,
+      amount,
+      donorId,
+      campaignId,
+    });
+
+    if (!txHash) {
+      throw new AppError('Blockchain transaction failed to return a valid hash.', 502);
+    }
+
+    const donation = new Donation({
+      amount,
+      currency: 'INR',
+      campaignId,
+      ngoId: ngo._id,
+      donorId,
+      paymentMethod: 'CRYPTO',
+      donorEmail: donor.email,
+      donorName: `${donor.firstName} ${donor.lastName}`,
+      donorMessage: null,
+      isAnonymous: false,
+      status: 'CONFIRMED',
+      blockchainTxHash: txHash,
+      network: 'ETHEREUM',
+    });
+
+    await donation.save();
+
+    campaign.raisedAmount = (campaign.raisedAmount || 0) + amount;
+    campaign.totalDonors = (campaign.totalDonors || 0) + 1;
+    campaign.totalTransactions = (campaign.totalTransactions || 0) + 1;
+
+    if (campaign.raisedAmount >= campaign.goalAmount) {
+      campaign.status = 'COMPLETED';
+    }
+
+    await campaign.save();
+
+    res.status(201).json({
+      success: true,
+      txHash,
+      donationId: donation._id,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   createDonation,
   confirmDonation,
   getDonation,
   getDonorDonations,
   getCampaignDonations,
+  getLedgerDonations,
+  dummyDonate,
 };

@@ -35,3 +35,18 @@ export function useConfirmDonation() {
     },
   });
 }
+
+export function useDummyDonate() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: { campaignId: string, amount: number }) =>
+      fetchApi<{ success: true; txHash: string; donationId: string }>('/donations/dummy', {
+        method: 'POST',
+        data,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['donations'] });
+      queryClient.invalidateQueries({ queryKey: ['campaigns'] });
+    },
+  });
+}

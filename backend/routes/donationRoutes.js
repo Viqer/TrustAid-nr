@@ -29,6 +29,11 @@ const confirmDonationSchema = Joi.object({
   status: Joi.string().valid('CONFIRMED', 'FAILED').optional(),
 });
 
+const dummyDonationSchema = Joi.object({
+  amount: Joi.number().min(1).required(),
+  campaignId: Joi.string().required(),
+});
+
 // Routes
 router.post(
   '/',
@@ -38,10 +43,23 @@ router.post(
   asyncHandler(donationController.createDonation)
 );
 
+router.post(
+  '/dummy',
+  auth,
+  allowRoles('DONOR'),
+  validate(dummyDonationSchema),
+  asyncHandler(donationController.dummyDonate)
+);
+
 router.patch(
   '/:donationId/confirm',
   validate(confirmDonationSchema),
   asyncHandler(donationController.confirmDonation)
+);
+
+router.get(
+  '/ledger',
+  asyncHandler(donationController.getLedgerDonations)
 );
 
 router.get(

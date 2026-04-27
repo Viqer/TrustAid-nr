@@ -44,6 +44,13 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    walletAddress: {
+      type: String,
+      default: null,
+      trim: true,
+      lowercase: true,
+      match: [/^0x[a-f0-9]{40}$/, 'Please provide a valid wallet address'],
+    },
     lastLogin: {
       type: Date,
       default: null,
