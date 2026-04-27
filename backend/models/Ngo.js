@@ -30,6 +30,13 @@ const ngoSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    walletAddress: {
+      type: String,
+      default: null,
+      trim: true,
+      lowercase: true,
+      match: [/^0x[a-f0-9]{40}$/, 'Please provide a valid wallet address'],
+    },
     address: {
       street: String,
       city: String,

@@ -62,6 +62,7 @@ export interface Campaign {
     | 'CLOSED';
   startDate: string;
   endDate: string;
+  isActive?: boolean;
   beneficiaries: string;
   createdAt: string;
 }
@@ -74,4 +75,14 @@ export interface Donation {
   status: 'pending' | 'confirmed' | 'failed';
   blockchainTxHash?: string;
   createdAt: string;
+}
+
+export interface LedgerDonation {
+  donationId: string;
+  txHash: string;
+  donorAddress: string | null;
+  ngoName: string;
+  amount: number;
+  currency: string;
+  timestamp: string;
 }

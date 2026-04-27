@@ -12,6 +12,7 @@ import DonorDashboard from './pages/DonorDashboard';
 import NgoDashboard from './pages/NgoDashboard';
 import AdminPanel from './pages/AdminPanel';
 import ProfilePage from './pages/ProfilePage';
+import LedgerPage from './pages/LedgerPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -31,7 +32,9 @@ function App() {
           <Route path="/login" component={LoginPage} />
           <Route path="/register" component={RegisterPage} />
           <Route path="/profile" component={ProfilePage} />
+          <Route path="/ledger" component={LedgerPage} />
           <Route path="/campaign/:id" component={CampaignDetailPage} />
+          <Route path="/campaigns/:id" component={CampaignDetailPage} />
           <Route path="/donor-dashboard" component={DonorDashboard} />
           <Route path="/ngo-dashboard" component={NgoDashboard} />
           <Route path="/admin" component={AdminPanel} />
