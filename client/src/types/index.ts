@@ -70,10 +70,10 @@ export interface Campaign {
 
 export interface Donation {
   _id: string;
-  campaign: Pick<Campaign, '_id' | 'title'>;
+  campaignId: Pick<Campaign, '_id' | 'title'>;
   donor: string;
   amount: number;
-  status: 'pending' | 'confirmed' | 'failed';
+  status: 'PENDING' | 'CONFIRMED' | 'FAILED';
   blockchainTxHash?: string;
   createdAt: string;
 }
