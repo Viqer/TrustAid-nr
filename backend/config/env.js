@@ -4,14 +4,19 @@
  */
 
 const validateEnv = () => {
+  const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI;
+
   const requiredVars = [
-    'MONGODB_URI',
     'JWT_SECRET',
     'NODE_ENV',
     'APP_PORT',
   ];
 
   const missingVars = requiredVars.filter((variable) => !process.env[variable]);
+
+  if (!mongoUri) {
+    missingVars.unshift('MONGODB_URI (or MONGO_URI)');
+  }
 
   if (missingVars.length > 0) {
     throw new Error(
@@ -21,7 +26,7 @@ const validateEnv = () => {
 
   return {
     nodeEnv: process.env.NODE_ENV || 'development',
-    mongodbUri: process.env.MONGODB_URI,
+    mongodbUri: mongoUri,
     jwtSecret: process.env.JWT_SECRET,
     jwtExpiry: process.env.JWT_EXPIRY || '7d',
     appPort: parseInt(process.env.APP_PORT, 10) || 5000,

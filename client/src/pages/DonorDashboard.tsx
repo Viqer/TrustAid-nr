@@ -8,7 +8,8 @@ import { Link, Redirect } from 'wouter';
 
 export default function DonorDashboard() {
   const { user } = useAuth();
-  const { data: donations, isLoading } = useDonorDonations();
+  const { data, isLoading } = useDonorDonations();
+  const donations = data?.donations || [];
 
   if (!user) return <Redirect to="/login" />;
   if (user.role !== 'DONOR') return <div className="p-20 text-center font-bold">Access Denied. Only Donors.</div>;
@@ -28,7 +29,7 @@ export default function DonorDashboard() {
             <Card key={donation._id} className="p-6 flex flex-col justify-between">
               <div>
                 <div className="flex justify-between items-start mb-4">
-                  <Badge variant={donation.status === 'confirmed' ? 'success' : donation.status === 'pending' ? 'warning' : 'destructive'}>
+                  <Badge variant={donation.status === 'CONFIRMED' ? 'success' : donation.status === 'PENDING' ? 'warning' : 'destructive'}>
                     {donation.status.toUpperCase()}
                   </Badge>
                   <span className="text-sm text-muted-foreground font-medium">
@@ -36,7 +37,7 @@ export default function DonorDashboard() {
                   </span>
                 </div>
                 
-                <h3 className="text-lg font-bold mb-1 truncate">{donation.campaign?.title || 'Unknown Campaign'}</h3>
+                <h3 className="text-lg font-bold mb-1 truncate">{donation.campaignId?.title || 'Unknown Campaign'}</h3>
                 <p className="text-3xl font-extrabold text-foreground mb-6">{formatCurrency(donation.amount)}</p>
                 
                 {donation.blockchainTxHash ? (
@@ -51,7 +52,7 @@ export default function DonorDashboard() {
                 )}
               </div>
               
-              <Link href={`/campaign/${donation.campaign?._id || ''}`} className="mt-6 block">
+              <Link href={`/campaign/${donation.campaignId?._id || ''}`} className="mt-6 block">
                  <Button variant="outline" className="w-full group">
                    View Campaign <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                  </Button>

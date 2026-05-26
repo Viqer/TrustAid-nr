@@ -5,14 +5,15 @@ import type { Donation } from '@/types';
 export function useDonorDonations() {
   return useQuery({
     queryKey: ['donations', 'me'],
-    queryFn: () => fetchApi<Donation[]>('/donations/me/donations'),
+    queryFn: () => fetchApi<{ donations: Donation[]; pagination: unknown }>('/donations/me/donations'),
   });
 }
 
 export function useCampaignDonations(campaignId: string) {
   return useQuery({
     queryKey: ['donations', 'campaign', campaignId],
-    queryFn: () => fetchApi<Donation[]>(`/donations/campaign/${campaignId}/donations`),
+    queryFn: () => fetchApi<{ donations: Donation[]; pagination: unknown }>(`/donations/campaign/${campaignId}/donations`)
+      .then((res) => res.donations),
     enabled: !!campaignId,
   });
 }
