@@ -1,0 +1,50 @@
+services:
+  mongodb:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    restart: unless-stopped
+
+  blockchain:
+    build:
+      context: ./blockchain
+      dockerfile: Dockerfile
+    ports:
+      - "8545:8545"
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    depends_on:
+      - mongodb
+      - blockchain
+    environment:
+      MONGO_URI: mongodb://mongodb:27017/trustaid
+      MONGODB_URI: mongodb://mongodb:27017/trustaid
+      BLOCKCHAIN_RPC_URL: http://blockchain:8545
+      PORT: 5000
+      APP_PORT: 5000
+      APP_HOST: 0.0.0.0
+      FRONTEND_URL: http://localhost:5173
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    environment:
+      VITE_API_URL: http://localhost:5000
+    restart: unless-stopped
+
+volumes:
+  mongodb_data:

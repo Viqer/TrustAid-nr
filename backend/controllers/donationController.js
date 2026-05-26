@@ -25,7 +25,7 @@ const ensureLocalWalletId = async (entity) => {
 
 const createDonation = async (req, res, next) => {
   try {
-    const donorId = req.user.id;
+    const donorId = req.user.id;  
     const {
       amount,
       currency,

@@ -1,4 +1,4 @@
-const BASE_URL = '/trustaid/backend/api';
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 interface FetchOptions extends RequestInit {
   data?: unknown;
@@ -17,7 +17,7 @@ export async function fetchApi<T>(endpoint: string, options: FetchOptions = {}):
     headers.set('Content-Type', 'application/json');
   }
 
-  const url = `${BASE_URL}${endpoint}`;
+  const url = `${BASE_URL}/api${endpoint}`;
   
   const response = await fetch(url, { ...options, headers });
   
